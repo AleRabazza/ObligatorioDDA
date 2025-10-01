@@ -1,10 +1,16 @@
 ﻿namespace ObligatorioDDA.src.Models
 {
+
     public class Recurso
     {
-        public int Id_Recurso { get; set; }
 
-        public string Nombre { get; set; }
+        public int Id   { get; set; }
 
+        public TipoRecurso Nombre { get; set; }
+
+        public enum TipoRecurso
+        {
+            Madera,Piedra,Comida
+        }
     }
 }

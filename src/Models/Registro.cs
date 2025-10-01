@@ -1,18 +1,27 @@
-﻿namespace ObligatorioDDA.src.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using  ObligatorioDDA.src.Models;
+
+namespace ObligatorioDDA.src.Models
 {
     public class Registro
     {
-        public int Id_Registro { get; set; }
+        public int Id { get; set; }
 
+        [ForeignKey("Partida")]
         public int id_Partida { get; set; }
+        public Partida? Partida { get; set; }
 
+        [ForeignKey("Jugador")]
         public int id_Jugador { get; set; }
+        public Jugador? Jugador { get; set; }
 
-        public int id_Recurso { get; set; }
 
+        public  Recurso.TipoRecurso TipoRecolectado { get; set; }
+        public int puntaje { get; set; } = 1;
+        
         public DateTime Fecha { get; set; }
 
-        public int puntaje { get; set; } = 1;
+
 
 
     }
