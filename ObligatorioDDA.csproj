@@ -73,7 +73,6 @@
     <Folder Include="docs\diagramas\" />
     <Folder Include="docs\wireframes\" />
     <Folder Include="tests\" />
-    <Folder Include="src\Services\" />
   </ItemGroup>
 
   <ItemGroup>
