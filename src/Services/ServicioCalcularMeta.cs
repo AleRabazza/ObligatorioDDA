@@ -12,15 +12,15 @@ namespace ObligatorioDDA.src.Services
         }
         
         // Método para calcular las metas (solo V1)
-        public void CalcularMetas(Partida partida)
+        public int CalcularMetas()
         {
 
-            partida.MetaMadera = GenerarMeta();
-            partida.MetaPiedra = GenerarMeta();
-            partida.MetaComida = GenerarMeta();
+            int metaFinal = GenerarMeta();
+
+            return metaFinal;
         }
 
-         public int GenerarMeta()
+         private  int GenerarMeta()
         {
             double numero = _random.NextDouble(); // valor entre 0 y 1
             int meta = (int)Math.Round(numero * 100);

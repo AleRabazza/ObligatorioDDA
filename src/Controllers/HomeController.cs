@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using ObligatorioDDA.Models;
+using ObligatorioDDA.src.Models;
 
 namespace ObligatorioDDA.src.Controllers
 {

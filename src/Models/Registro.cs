@@ -15,7 +15,7 @@ namespace ObligatorioDDA.src.Models
         public int Id_Jugador { get; set; }
         public Jugador? Jugador { get; set; }
 
-        public  Recurso.TipoRecurso TipoRecolectado { get; set; }
+        public  Recurso.TipoRecurso TipoRecolectado { get; set; }   
         public int Puntaje { get; set; } = 1;
         
         public DateTime Fecha { get; set; }

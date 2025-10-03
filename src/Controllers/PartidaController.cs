@@ -1,83 +1,67 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ObligatorioDDA.src.Data;
+using ObligatorioDDA.src.Models;
+using ObligatorioDDA.src.Services;
 
 namespace ObligatorioDDA.src.Controllers
 {
     public class PartidaController : Controller
     {
+        private readonly AppDbContext _context;
+        private const string SessionJugadorId = "JugadorId";
+
+        public PartidaController(AppDbContext context)
+        {
+            _context = context;
+        }
+
         // GET: JuegoController
         public ActionResult Index()
         {
+            Partida?  HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
+            if (HayPartidaEnJuego == null) {
+                IniciarPartida();
+            }
+
+            // viewbags de meta para mostrar en la vista
+            ViewBag.MetaMadera = HayPartidaEnJuego.MetaMadera;
+            ViewBag.MetaPiedra = HayPartidaEnJuego.MetaPiedra;
+            ViewBag.MetaComida = HayPartidaEnJuego.MetaComida;
+
+
+
             return View();
         }
 
-        // GET: JuegoController/Details/5
-        public ActionResult Details(int id)
+        public void IniciarPartida()
         {
-            return View();
+            Partida partida = new Partida();
+            var ServicioCalcularMeta = new ServicioCalcularMeta();
+            partida.Estado = EstadoPartida.Jugando;
+            partida.MetaMadera = ServicioCalcularMeta.CalcularMetas();
+            partida.MetaPiedra = ServicioCalcularMeta.CalcularMetas();
+            partida.MetaComida = ServicioCalcularMeta.CalcularMetas();
+            partida.Registros = new List<Registro>();
+            _context.Partidas.Add(partida);
+            _context.SaveChanges();
+
         }
 
-        // GET: JuegoController/Create
-        public ActionResult Create()
-        {
-            return View();
+        public void MostrarMetas(){
+
+            Partida? partida = _context.Partidas.SingleOrDefault(p => p.Estado == EstadoPartida.Jugando); //ver despues 
+
         }
 
-        // POST: JuegoController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+        
+        public void Recolectar (){
 
-        // GET: JuegoController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
         }
+        
 
-        // POST: JuegoController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
 
-        // GET: JuegoController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
 
-        // POST: JuegoController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+
     }
 }

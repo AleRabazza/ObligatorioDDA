@@ -9,6 +9,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(); // agregamos la sesión para pasar el id del jugador
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -21,6 +24,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.UseSession();
 
 app.MapControllerRoute(
     name: "default",
