@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ObligatorioDDA.src.Controllers
 {
-    public class JuegoController : Controller
+    public class PartidaController : Controller
     {
         // GET: JuegoController
         public ActionResult Index()
