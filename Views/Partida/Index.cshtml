@@ -74,6 +74,7 @@
   </nav>
 
   <!-- Main -->
+  <input type="hidden" id="partidaId" value="@ViewBag.PartidaId" />     <!-- Id de la partida en juego-->
   <main class="container py-4">
 
     <!-- Estado de la partida -->
@@ -94,7 +95,7 @@
             <h5 class="card-title mb-3 text-white">Madera</h5>
             
             <div class="resource-counter mb-3">
-              <div class="resource-current" id="woodCurrent">11</div>
+              <div class="resource-current" id="maderaActual">0</div>
               <div class="resource-total">de <span id="woodTotal">@ViewBag.MetaMadera</span></div>
             </div>
             
@@ -114,7 +115,7 @@
             <h5 class="card-title mb-3 text-white">Piedra</h5>
             
             <div class="resource-counter mb-3">
-              <div class="resource-current" id="stoneCurrent">1</div>
+              <div class="resource-current" id="piedraActual">0</div>
               <div class="resource-total">de <span id="stoneTotal">@ViewBag.MetaPiedra</span></div>
             </div>
             
@@ -134,7 +135,7 @@
             <h5 class="card-title mb-3 text-white">Comida</h5>
             
             <div class="resource-counter mb-3">
-              <div class="resource-current" id="foodCurrent">11</div>
+              <div class="resource-current" id="comidaActual">0</div>
               <div class="resource-total">de <span id="foodTotal">@ViewBag.MetaComida</span></div>
             </div>
             
@@ -192,78 +193,74 @@
   <!-- JavaScript personalizado -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Referencias a elementos
-
+    
       const btnRecolectarComida = document.getElementById('btnRecolectarComida')
       const btnRecolectarPiedra = document.getElementById('btnRecolectarPiedra')
       const btnRecolectarMadera = document.getElementById('btnRecolectarMadera')
+
       const changeNameBtn = document.getElementById('changeNameBtn');
       const changeNameModal = new bootstrap.Modal(document.getElementById('changeNameModal'));
       const nombreInput = document.getElementById('nombre');
       const acceptNameChangeBtn = document.getElementById('acceptNameChange');
       const playerNameDisplay = document.getElementById('playerNameDisplay');
 
+      const maderaActual  = document.getElementById('maderaActual');
+      const piedraActual = document.getElementById('piedraActual');
+      const comidaActual = document.getElementById('comidaActual');
+
+      const partidaId = parseInt(document.getElementById('partidaId').value, 10);
+
       // Abrir modal al hacer clic en "Cambiar nombre"
       changeNameBtn.addEventListener('click', function() {
-        // Limpiar campo de entrada
         nombreInput.value = '';
-        // Mostrar el modal
         changeNameModal.show();
-        // Enfocar el campo de texto cuando se abre
         setTimeout(() => {
           nombreInput.focus();
         }, 500);
-      });
+      });   
+            
 
-      // Manejar envío con botón "Aceptar"
-      acceptNameChangeBtn.addEventListener('click', function() {
-        const newName = nombreInput.value.trim();
-        
-        if (newName === '') {
-          // Mostrar error si está vacío
-          nombreInput.classList.add('is-invalid');
-          return;
-        }
-        
-        if (newName.length > 20) {
-          // Validar longitud máxima
-          nombreInput.classList.add('is-invalid');
-          return;
-        }
+  acceptNameChangeBtn.addEventListener('click', async () => {
+    const nombre = (nombreInput.value || '').trim();
+    if (!nombre) { nombreInput.classList.add('is-invalid'); return; }
 
-        // Validar caracteres (solo letras, números y algunos especiales)
-        const validNamePattern = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ_-]+$/;
-        if (!validNamePattern.test(newName)) {
-          nombreInput.classList.add('is-invalid');
-          return;
-        }
+    const formdata = new FormData();
+    formdata.append('nombre', nombre);
 
-        // Actualizar nombre mostrado
-        playerNameDisplay.innerHTML = `Jugador: <em>${newName}</em>`;
-        
-        // Limpiar estado de error
-        nombreInput.classList.remove('is-invalid');
-        
-        // Cerrar modal
-        changeNameModal.hide();
-      });
+    const res = await fetch('/Partida/GuardarJugador', { method: 'POST', body: formdata });
+    if (!res.ok) { nombreInput.classList.add('is-invalid'); return; }
+    const data = await res.json();
+    if (data.ok) {
+      playerNameDisplay.innerHTML = `Jugador: <em>${data.nombre}</em>`;
+      nombreInput.classList.remove('is-invalid');
+      changeNameModal.hide();
+    }
+  });
 
-      // Permitir envío con Enter
-      nombreInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          acceptNameChangeBtn.click();
-        }
-      });
 
-      // Limpiar estado de error cuando se empieza a escribir
-      nombreInput.addEventListener('input', function() {
-        this.classList.remove('is-invalid');
-      });
+  async function Recolectar(tipo){
+      const formdata = new FormData();
+      formdata.append('tipo', String(tipo));
+      formdata.append('partidaId', String(partidaId));
 
-      btnRecolectarMadera.addEventListener('click', Recolectar(1))
-      btnRecolectarPiedra.addEventListener('click', Recolectar(2))
-      btnRecolectarComida.addEventListener('click', Recolectar(3))
+       const respuesta = await fetch('/Partida/Recolectar', { method: 'POST', body: formdata });
+         if (!respuesta.ok) { alert('Error en la solicitud'); return; }
+
+       const data = await respuesta.json();
+         if (data.ok) {
+        maderaActual.textContent  = data.totales.madera;
+       piedraActual.textContent = data.totales.piedra;
+        comidaActual.textContent  = data.totales.comida;
+
+      if (data.completada) {
+        btnRecolectarMadera.disabled = btnRecolectarPiedra.disabled = btnRecolectarComida.disabled = true;
+      }
+         }
+  }
+
+btnRecolectarMadera.addEventListener('click', () => Recolectar(0));
+btnRecolectarPiedra.addEventListener('click', () => Recolectar(1));
+btnRecolectarComida.addEventListener('click', () => Recolectar(2));
 
     });
   </script>
