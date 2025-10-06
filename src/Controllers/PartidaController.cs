@@ -4,27 +4,39 @@ using Microsoft.AspNetCore.Mvc;
 using ObligatorioDDA.src.Data;
 using ObligatorioDDA.src.Models;
 using ObligatorioDDA.src.Services;
+using ObligatorioDDA.src.Helpers;
 
 namespace ObligatorioDDA.src.Controllers
 {
     public class PartidaController : Controller
     {
         private readonly AppDbContext _context;
-        private const string SessionJugadorId = "JugadorId";
 
         public PartidaController(AppDbContext context)
         {
             _context = context;
         }
 
-        // GET: JuegoController
-        public ActionResult Index()
+
+        public ActionResult Index() 
         {
-            Partida?  HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
-            if (HayPartidaEnJuego == null) {                
-                    IniciarPartida();   
-            }
+            Partida  HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
  
+            //Partida HayPartidaTerminada = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Terminada);
+            //if (HayPartidaEnJuego == null) {
+            //    //retornar resultados de partida anterior si la hubo
+
+            //}
+
+            //if (HayPartidaEnJuego == null && HayPartidaTerminada == null)
+            //{
+            //    HayPartidaEnJuego = IniciarPartida();
+            //}   
+
+            if (HayPartidaEnJuego == null)
+            {
+                HayPartidaEnJuego = IniciarPartida();
+            }
 
             // viewbags de meta para mostrar en la vista
             ViewBag.MetaMadera = HayPartidaEnJuego.MetaMadera;
@@ -34,10 +46,7 @@ namespace ObligatorioDDA.src.Controllers
             return View();
         }
 
-        public void IniciarPartida()
-
-
-
+        public Partida IniciarPartida()
         {
             Partida partida = new Partida();
             var ServicioCalcularMeta = new ServicioCalcularMeta();
@@ -48,28 +57,7 @@ namespace ObligatorioDDA.src.Controllers
             partida.Registros = new List<Registro>();
             _context.Partidas.Add(partida);
             _context.SaveChanges();
-
-        }
-
-        [HttpPost]
-        public IActionResult GuardarJugador(string nombre)
-        {
-            if (string.IsNullOrEmpty(nombre)) {
-                return BadRequest("El nombre del jugador no puede estar vacío.");
-            }
-
-            Jugador? jugador = _context.Jugadores.FirstOrDefault(j => j.Nombre == nombre);
-            if (jugador == null) {
-                jugador = new Jugador { Nombre = nombre };
-                _context.Jugadores.Add(jugador);
-                _context.SaveChanges();
-            }
-            HttpContext.Session.SetInt32(SessionJugadorId, jugador.Id);
-                
-
-            return Ok(
-                new { ok = true, jugadorId = jugador.Id, nombre = jugador.Nombre }    // manda el statatus 200 con la info del jugador
-            );
+            return partida;
         }
 
         [HttpPost]
@@ -78,7 +66,7 @@ namespace ObligatorioDDA.src.Controllers
             Partida? partida = _context.Partidas.FirstOrDefault(p => p.Id == partidaId && p.Estado == EstadoPartida.Jugando);
             if (partida == null) return BadRequest("No hay partida");
 
-            int? jugadorId = HttpContext.Session.GetInt32(SessionJugadorId);
+            int? jugadorId = HttpContext.Session.GetInt32(SessionUsuario.JugadorId);
             if (jugadorId == null) return BadRequest("No hay jugador en sesión");
 
             //nos fijamos antes de sumar el recurso si ya se llego a la meta 

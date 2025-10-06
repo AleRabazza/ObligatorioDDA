@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const formdata = new FormData();
     formdata.append('nombre', nombre);
 
-    const res = await fetch('/Partida/GuardarJugador', { method: 'POST', body: formdata });
+    const res = await fetch('/Jugador/GuardarJugador', { method: 'POST', body: formdata });
     if (!res.ok) { nombreInput.classList.add('is-invalid'); return; }
 
     const data = await res.json();
