@@ -22,15 +22,7 @@ namespace ObligatorioDDA.src.Controllers
         {
             Partida?  HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
             if (HayPartidaEnJuego == null) {                
- 
-                Partida? HayPartidaTerminada = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Terminada);
-                if (HayPartidaTerminada == null) {
-                    IniciarPartida();
-                    HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
-                } 
-
-
-
+                    IniciarPartida();   
             }
  
 
@@ -83,51 +75,106 @@ namespace ObligatorioDDA.src.Controllers
         [HttpPost]
         public IActionResult Recolectar(int partidaId, Recurso.TipoRecurso tipo)
         {
-            Partida partida = _context.Partidas.FirstOrDefault(p => p.Id == partidaId && p.Estado == EstadoPartida.Jugando);
-            if (partida == null) {
-                return BadRequest("No hay partida");
-            }
-
+            Partida? partida = _context.Partidas.FirstOrDefault(p => p.Id == partidaId && p.Estado == EstadoPartida.Jugando);
+            if (partida == null) return BadRequest("No hay partida");
 
             int? jugadorId = HttpContext.Session.GetInt32(SessionJugadorId);
-            if (jugadorId == null) {
-                return BadRequest("No hay jugador en sesión");
+            if (jugadorId == null) return BadRequest("No hay jugador en sesión");
+
+            //nos fijamos antes de sumar el recurso si ya se llego a la meta 
+            int madera = _context.Registros
+                .Where(r => r.Id_Partida == partidaId && r.TipoRecolectado == Recurso.TipoRecurso.Madera)
+                .Sum(r => r.Puntaje);
+
+            int piedra = _context.Registros
+                .Where(r => r.Id_Partida == partidaId && r.TipoRecolectado == Recurso.TipoRecurso.Piedra)
+                .Sum(r => r.Puntaje);
+
+            int comida = _context.Registros
+                .Where(r => r.Id_Partida == partidaId && r.TipoRecolectado == Recurso.TipoRecurso.Comida)
+                .Sum(r => r.Puntaje);
+
+            bool maderaLlena = madera >= partida.MetaMadera;
+            bool piedraLlena = piedra >= partida.MetaPiedra;
+            bool comidaLlena = comida >= partida.MetaComida;
+
+            // si e recurso que se quiere sumar ya llego a la meta, no se suma
+            bool puedeSumar =
+                (tipo == Recurso.TipoRecurso.Madera && !maderaLlena) ||
+                (tipo == Recurso.TipoRecurso.Piedra && !piedraLlena) ||
+                (tipo == Recurso.TipoRecurso.Comida && !comidaLlena);
+
+            if (puedeSumar)
+            {
+                _context.Registros.Add(new Registro
+                {
+                    Id_Jugador = jugadorId.Value,
+                    Id_Partida = partidaId,
+                    TipoRecolectado = tipo,
+                    Puntaje = 1, // siempre sumamos 1
+                    Fecha = DateTime.UtcNow
+                });
+                _context.SaveChanges();
+
+                // se actualiza el tota del recurso que se sumo
+                switch (tipo)
+                {
+                    case Recurso.TipoRecurso.Madera: madera++; break;
+                    case Recurso.TipoRecurso.Piedra: piedra++; break;
+                    case Recurso.TipoRecurso.Comida: comida++; break;
+                }
             }
 
-            _context.Registros.Add(new Registro
+            // se vuelve a verificar si se llego a la meta despues de sumar
+            maderaLlena = madera >= partida.MetaMadera;
+            piedraLlena = piedra >= partida.MetaPiedra;
+            comidaLlena = comida >= partida.MetaComida;
+
+            bool completada = maderaLlena && piedraLlena && comidaLlena;
+            if (completada && partida.Estado != EstadoPartida.Terminada)
             {
-                Id_Jugador = jugadorId.Value,
-                Id_Partida = partidaId,
-                TipoRecolectado = tipo,
-                Puntaje = 1, // cada vez que se recolecta, se suma 1
-                Fecha = DateTime.Now
-            });
-            _context.SaveChanges();
+                // Tomamos primer y último registro de la partida desde la base
+                DateTime? primerFechaPartida = _context.Registros
+                    .Where(registro => registro.Id_Partida == partidaId)
+                    .Select(registro => (DateTime?)registro.Fecha)
+                    .Min();
 
-            // Calcular totales actuales
-            int maderaActual = _context.Registros.Count(registro => registro.Id_Partida == partidaId && registro.TipoRecolectado == Recurso.TipoRecurso.Madera);
-            int piedraActual= _context.Registros.Count(registro => registro.Id_Partida == partidaId && registro.TipoRecolectado == Recurso.TipoRecurso.Piedra);
-            int comidaActual = _context.Registros.Count(registro => registro.Id_Partida == partidaId && registro.TipoRecolectado == Recurso.TipoRecurso.Comida);
+                DateTime? ultimaFechaPartida = _context.Registros
+                    .Where(registro => registro.Id_Partida == partidaId)
+                    .Select(registro => (DateTime?)registro.Fecha)
+                    .Max();
 
-            // Verificar si se alcanzaron las metas
-            bool done = false;
-            if (maderaActual >= partida.MetaMadera && piedraActual >= partida.MetaPiedra && comidaActual >= partida.MetaComida) {
+                if (primerFechaPartida.HasValue && ultimaFechaPartida.HasValue)
+                {
+                    partida.TiempoPartida = ultimaFechaPartida.Value - primerFechaPartida.Value; // ⬅️ intervalo exacto
+                }
+
                 partida.Estado = EstadoPartida.Terminada;
                 _context.SaveChanges();
-                done = true;
             }
-            return Ok(       //aca vamos a devolver datos para actualizart desp en la vista los recursos recolectados actuales y si completa la partioda deshabilitar los vbotones de recoleccion
-               (new { ok = true, totales = new { madera = maderaActual, piedra = piedraActual, comida = comidaActual }, completada = done })
-            );
+
+            string? tiempoMinutos = null;
+            if (completada = true && partida.TiempoPartida.HasValue)
+            {
+                TimeSpan duracionPartida = partida.TiempoPartida.Value;
+                                                     
+                //sacamos los minutos y segundos y los ponemos en formato mm:ss para mostrarlos en la view  
+                tiempoMinutos = $"{(int)duracionPartida.TotalMinutes}:{duracionPartida.Seconds:D2}";
+            }
+            return Ok(new
+            {
+                ok = true,
+                totales = new { madera, piedra, comida },
+                metasAlcanzadas = new { madera = maderaLlena, piedra = piedraLlena, comida = comidaLlena },
+                completada,
+                tiempoPartida = tiempoMinutos
+            });
 
         }
 
-        // Se crean los registros bien, falta implemenmtar que cuando llegue a la meta no deje hacer ,mas y se deshabiuite el boton
-        // ma;ana vemos eso y lo resolvemos para que quede bien, ademas hay quie hacer que se fije que cuando llegue a todas las metas, ponga e calculo de tiempo de partida en la partida \
 
 
 
-        
 
 
 
