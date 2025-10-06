@@ -61,7 +61,7 @@ namespace ObligatorioDDA.src.Controllers
         }
 
         [HttpPost]
-        public IActionResult Recolectar(int partidaId, Recurso.TipoRecurso tipo)
+        public IActionResult Registro(int partidaId, Recurso.TipoRecurso tipo)
         {
             Partida? partida = _context.Partidas.FirstOrDefault(p => p.Id == partidaId && p.Estado == EstadoPartida.Jugando);
             if (partida == null) return BadRequest("No hay partida");

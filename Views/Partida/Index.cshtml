@@ -250,12 +250,12 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   //aca va la parte de recolección
-  async function Recolectar(tipo) {
+  async function Registro(tipo) {
     const fd = new FormData();
     fd.append('tipo', String(tipo));       // aca se pasa el tipo de recurso que como es un enum se pasa como 0 1 o 2
     fd.append('partidaId', String(partidaId));
 
-    const resp = await fetch('/Partida/Recolectar', { method: 'POST', body: fd });
+    const resp = await fetch('/Partida/Registro', { method: 'POST', body: fd });
     if (!resp.ok) {
       const err = await resp.text();
       alert('Error en la solicitud: ' + err);
@@ -290,9 +290,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // eventlistener de los botones de recursos
-  btnRecolectarMadera.addEventListener('click', () => Recolectar(0));
-  btnRecolectarPiedra.addEventListener('click', () => Recolectar(1));
-  btnRecolectarComida.addEventListener('click', () => Recolectar(2));
+  btnRecolectarMadera.addEventListener('click', () => Registro(0));
+  btnRecolectarPiedra.addEventListener('click', () => Registro(1));
+  btnRecolectarComida.addEventListener('click', () => Registro(2));
 });
 </script>
 
