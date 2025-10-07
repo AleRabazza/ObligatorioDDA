@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
     fd.append('tipo', String(tipo));       // aca se pasa el tipo de recurso que como es un enum se pasa como 0 1 o 2
     fd.append('partidaId', String(partidaId));
 
-    const resp = await fetch('/Partida/Registro', { method: 'POST', body: fd });
+    const resp = await fetch('/Registro/GuardarRegistro', { method: 'POST', body: fd });
     if (!resp.ok) {
       const err = await resp.text();
       alert('Error en la solicitud: ' + err);
