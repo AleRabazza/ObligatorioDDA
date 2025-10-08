@@ -87,7 +87,7 @@ namespace ObligatorioDDA.src.Controllers
                 metasAlcanzadas = new { madera = metas.maderaLlena, piedra = metas.piedraLlena, comida = metas.comidaLlena },
                 partidaCompletada,
                 tiempoPartida,
-                
+                registros = partidaCompletada ? ObtenerTotalesPorJugador(partidaId) : null
             });
         }
 

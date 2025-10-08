@@ -1,29 +1,27 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
-    // botones de recolección
+    const mainContainer = document.getElementById('mainContainer');
+    const partidaId = parseInt(mainContainer.dataset.partidaId, 10);
+
     const btnRecolectarMadera = document.getElementById('btnRecolectarMadera');
     const btnRecolectarPiedra = document.getElementById('btnRecolectarPiedra');
     const btnRecolectarComida = document.getElementById('btnRecolectarComida');
 
-    // navbar y modal de nombre
     const changeNameBtn = document.getElementById('changeNameBtn');
     const changeNameModal = new bootstrap.Modal(document.getElementById('changeNameModal'));
     const nombreInput = document.getElementById('nombre');
     const acceptNameChangeBtn = document.getElementById('acceptNameChange');
     const playerNameDisplay = document.getElementById('playerNameDisplay');
 
-    // contadores en cards
     const maderaActual = document.getElementById('maderaActual');
     const piedraActual = document.getElementById('piedraActual');
     const comidaActual = document.getElementById('comidaActual');
 
-    // tiempo partida
     const tiempoPanel = document.getElementById('tiempoPartidaCompleta');
     const tiempoValor = document.getElementById('tiempoPartidaValor');
 
-    // partida
-    const partidaId = parseInt(document.getElementById('partidaId').value, 10);
+    const tablaResultados = document.getElementById('tablaResultados');
+    const cuerpoResultados = document.getElementById('tablaResultadosBody');
 
-    // aca va toda la parte del nombre del jugador 
     changeNameBtn.addEventListener('click', function () {
         nombreInput.value = '';
         changeNameModal.show();
@@ -48,47 +46,54 @@
         }
     });
 
-    //aca va la parte de recolección
     async function Registro(tipo) {
         const fd = new FormData();
-        fd.append('tipo', String(tipo));       // aca se pasa el tipo de recurso que como es un enum se pasa como 0 1 o 2
+        fd.append('tipo', String(tipo));
         fd.append('partidaId', String(partidaId));
 
         const resp = await fetch('/Registro/GuardarRegistro', { method: 'POST', body: fd });
-        if (!resp.ok) {
-            const err = await resp.text();
-            alert('Error en la solicitud: ' + err);
-            return;
-        }
+        if (!resp.ok) { alert('Error en la solicitud'); return; }
 
         const data = await resp.json();
         if (!data.ok) return;
 
-        // actualizamos los contadores
         maderaActual.textContent = data.totales.madera;
         piedraActual.textContent = data.totales.piedra;
         comidaActual.textContent = data.totales.comida;
 
-        // si individualmente llegan a la meta se deshabilita el boton
         if (data.metasAlcanzadas?.madera) btnRecolectarMadera.disabled = true;
         if (data.metasAlcanzadas?.piedra) btnRecolectarPiedra.disabled = true;
         if (data.metasAlcanzadas?.comida) btnRecolectarComida.disabled = true;
 
-        // si todas las metas se completas van a estae desabilitados todos los botones y se muestra el tiempo
-        if (data.completada) {
+        if (data.partidaCompletada) {
+
             btnRecolectarMadera.disabled = true;
             btnRecolectarPiedra.disabled = true;
             btnRecolectarComida.disabled = true;
 
-            // tiempo de partida en mm:ss
             if (data.tiempoPartida) {
                 tiempoValor.textContent = data.tiempoPartida;
                 tiempoPanel.classList.remove('d-none');
             }
+
+            if (data.registros && Array.isArray(data.registros)) {
+                cuerpoResultados.innerHTML = '';
+                data.registros.forEach(j => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+            <td>${j.nombreJugador || 'Jugador ' + j.jugadorId}</td>
+            <td>${j.sumaTotalMadera}</td>
+            <td>${j.sumaTotalPiedra}</td>
+            <td>${j.sumaTotalComida}</td>
+            <td>${j.sumaTotalRecursos}</td>
+          `;
+                    cuerpoResultados.appendChild(fila);
+                });
+                tablaResultados.classList.remove('d-none');
+            }
         }
     }
 
-    // eventlistener de los botones de recursos
     btnRecolectarMadera.addEventListener('click', () => Registro(0));
     btnRecolectarPiedra.addEventListener('click', () => Registro(1));
     btnRecolectarComida.addEventListener('click', () => Registro(2));
