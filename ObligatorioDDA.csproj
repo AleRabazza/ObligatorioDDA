@@ -9,10 +9,12 @@
   <ItemGroup>
     <Folder Include="docs\diagramas\" />
     <Folder Include="docs\wireframes\" />
+    <Folder Include="src\Models\DTOs\" />
     <Folder Include="tests\" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\js\Index.js" />
     <None Include="wwwroot\css\site.css" />
     <None Include="wwwroot\favicon.ico" />
     <None Include="wwwroot\js\site.js" />

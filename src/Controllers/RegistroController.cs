@@ -29,6 +29,7 @@ namespace ObligatorioDDA.src.Controllers
             {
                 return BadRequest("No hay un jugador en sesión.");
             }
+           
 
             //traemos los totales actuales
             Totales totales = CalcularTotales(partidaId);
@@ -46,21 +47,24 @@ namespace ObligatorioDDA.src.Controllers
                 };
                 _context.Registros.Add(nuevoRegistro);
                 _context.SaveChanges();
-            }
 
-            // actualizar los totales desp de sumar un registro 
-            switch(tipo)
-            {  case Recurso.TipoRecurso.Madera:
-                    totales.Madera++;
-                    break;
-                case Recurso.TipoRecurso.Piedra:
-                    totales.Piedra++;
-                    break;
-                case Recurso.TipoRecurso.Comida:
-                    totales.Comida++;
-                break;
-            }
+                // actualizar los totales desp de sumar un registro 
 
+                switch (tipo)
+                {
+                    case Recurso.TipoRecurso.Madera:
+                        totales.Madera++;
+                        break;
+                    case Recurso.TipoRecurso.Piedra:
+                        totales.Piedra++;
+                        break;
+                    case Recurso.TipoRecurso.Comida:
+                        totales.Comida++;
+                        break;
+                }
+
+            }
+    
             // se vuelec a calcular si se cumplieron las metas 
             metas = VerificarMetas(partida, totales);
 
@@ -177,9 +181,12 @@ namespace ObligatorioDDA.src.Controllers
 
             return $"{(int)tiempo.Value.TotalMinutes}:{tiempo.Value.Seconds:D2}";
         }
+        
 
-
-
-
+        public List<Registro> MostrarRegistros(int partida)
+        {
+            List<Registro> registris = _context.Registros.
+            return
+        }
     }
 }

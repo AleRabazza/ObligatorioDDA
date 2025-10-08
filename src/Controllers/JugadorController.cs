@@ -29,6 +29,7 @@ namespace ObligatorioDDA.src.Controllers
                 _context.Jugadores.Add(jugador);
                 _context.SaveChanges();
             }
+          
 
             HttpContext.Session.SetInt32(SessionUsuario.JugadorId, jugador.Id);
 
