@@ -201,10 +201,28 @@ namespace ObligatorioDDA.src.Controllers
                     JugadorId = g.Key,
                     SumaTotalComida = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Comida).Sum(r => r.Puntaje),
                     SumaTotalMadera = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Madera).Sum(r => r.Puntaje),
-                    SumaTotalPiedra = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Piedra).Sum(r => r.Puntaje)
-                })
+                    SumaTotalPiedra = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Piedra).Sum(r => r.Puntaje),
+                    SumaTotalRecursos = g.Sum(r => r.Puntaje)
+                }).ToList();
+
+            List<JugadorTotal> totalesConNombre = totalesPorJugador
+              .Join(_context.Jugadores,
+              s => s.JugadorId,
+              j => j.Id,
+              (s, j) => new JugadorTotal
+              {
+                  JugadorId = s.JugadorId,
+                  NombreJugador = j.Nombre,
+                  SumaTotalComida = s.SumaTotalComida,
+                  SumaTotalMadera = s.SumaTotalMadera,
+                  SumaTotalPiedra = s.SumaTotalPiedra,
+                  SumaTotalRecursos = s.SumaTotalRecursos
+              })
+                .OrderByDescending(x => x.SumaTotalRecursos)
                 .ToList();
-            return totalesPorJugador;
+            return totalesConNombre;
         }
+
+
     }
 }
