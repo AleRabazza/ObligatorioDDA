@@ -201,7 +201,40 @@
 
 
     <div>
+      
+        @{
+        var registros = ViewBag.Registros as List<ObligatorioDDA.src.Models.DTOs.JugadorTotal>;
 
+        @if (registros != null && registros.Any())
+        {
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>Jugador</th>
+                        <th>Madera</th>
+                        <th>Piedra</th>
+                        <th>Comida</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var j in registros)
+                    {
+                        <tr>
+                            <td>@j.JugadorId</td>
+                            <td>@j.SumaTotalComida</td>
+                            <td>@j.SumaTotalPiedra</td>
+                            <td>@j.SumaTotalMadera</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p class="text-muted">No hay registros disponibles.</p>
+        }
+        }
 
 
     </div>

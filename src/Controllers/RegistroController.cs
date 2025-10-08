@@ -2,6 +2,7 @@
 using ObligatorioDDA.src.Data;
 using ObligatorioDDA.src.Helpers;
 using ObligatorioDDA.src.Models;
+using ObligatorioDDA.src.Models.DTOs;
 
 namespace ObligatorioDDA.src.Controllers
 {
@@ -73,6 +74,8 @@ namespace ObligatorioDDA.src.Controllers
             if (partidaCompletada)
             {
                 MarcarPartidaCompletada(partida);
+               List<JugadorTotal> registros = ObtenerTotalesPorJugador(partidaId);
+                ViewBag.Registros = registros;
             }
 
             string? tiempoPartida = partidaCompletada ? MostrarTiempoPartidaEnMin(partida.TiempoPartida) : null;
@@ -83,7 +86,8 @@ namespace ObligatorioDDA.src.Controllers
                 totales = new { madera = totales.Madera, piedra = totales.Piedra, comida = totales.Comida },
                 metasAlcanzadas = new { madera = metas.maderaLlena, piedra = metas.piedraLlena, comida = metas.comidaLlena },
                 partidaCompletada,
-                tiempoPartida
+                tiempoPartida,
+                
             });
         }
 
@@ -172,6 +176,11 @@ namespace ObligatorioDDA.src.Controllers
 
             partida.Estado = EstadoPartida.Terminada;
             _context.SaveChanges();
+
+            ViewBag.EstadoPartida = partida.Estado;
+
+            int partidaId = partida.Id;
+            ObtenerTotalesPorJugador(partidaId);
         }
 
         private string? MostrarTiempoPartidaEnMin(TimeSpan? tiempo)
@@ -181,12 +190,21 @@ namespace ObligatorioDDA.src.Controllers
 
             return $"{(int)tiempo.Value.TotalMinutes}:{tiempo.Value.Seconds:D2}";
         }
-        
 
-        public List<Registro> MostrarRegistros(int partida)
+        List<JugadorTotal> ObtenerTotalesPorJugador(int partidaId)
         {
-            List<Registro> registris = _context.Registros.
-            return
+            List<JugadorTotal> totalesPorJugador = _context.Registros
+                .Where(r => r.Id_Partida == partidaId)
+                .GroupBy(r => r.Id_Jugador)
+                .Select(g => new JugadorTotal
+                {
+                    JugadorId = g.Key,
+                    SumaTotalComida = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Comida).Sum(r => r.Puntaje),
+                    SumaTotalMadera = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Madera).Sum(r => r.Puntaje),
+                    SumaTotalPiedra = g.Where(r => r.TipoRecolectado == Recurso.TipoRecurso.Piedra).Sum(r => r.Puntaje)
+                })
+                .ToList();
+            return totalesPorJugador;
         }
     }
 }
