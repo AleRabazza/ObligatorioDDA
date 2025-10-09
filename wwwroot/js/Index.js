@@ -5,6 +5,7 @@
     const btnRecolectarMadera = document.getElementById('btnRecolectarMadera');
     const btnRecolectarPiedra = document.getElementById('btnRecolectarPiedra');
     const btnRecolectarComida = document.getElementById('btnRecolectarComida');
+    const btnReiniciar = document.getElementById('btnReiniciar')
 
     const changeNameBtn = document.getElementById('changeNameBtn');
     const changeNameModal = new bootstrap.Modal(document.getElementById('changeNameModal'));
@@ -97,4 +98,23 @@
     btnRecolectarMadera.addEventListener('click', () => Registro(0));
     btnRecolectarPiedra.addEventListener('click', () => Registro(1));
     btnRecolectarComida.addEventListener('click', () => Registro(2));
+
+    btnReiniciar.addEventListener('click', async () => {
+        const confirmar = confirm("¿Deseas reiniciar la partida?");
+        if (!confirmar) return;
+
+        const response = await fetch('/Partida/Reiniciar', { method: 'POST' });
+        const data = await response.json();
+
+        if (data.ok) {
+            if (data.existente) {
+                alert("Ya hay una partida activa creada por otro jugador. Serás redirigido a ella.");
+            } else {
+                alert("Nueva partida iniciada correctamente.");
+            }
+            location.reload();
+        } else {
+            alert("Error al reiniciar la partida: " + data.mensaje);
+        }
+    });
 });

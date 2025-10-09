@@ -59,5 +59,61 @@ namespace ObligatorioDDA.src.Controllers
             _context.SaveChanges();
             return partida;
         }
-    }    
-}
+
+
+        [HttpPost]
+
+        public IActionResult Reiniciar()
+        {
+            try
+            {
+                // Verificamos si ya existe una partida activa (puede haberla iniciado otro jugador)
+                Partida? partidaEnCurso = _context.Partidas
+                    .FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
+
+                if (partidaEnCurso != null)
+                {
+                    // Si ya existe, no creamos una nueva: devolvemos esa
+                    return Ok(new
+                    {
+                        ok = true,
+                        existente = true,
+                        partidaId = partidaEnCurso.Id,
+                        metaMadera = partidaEnCurso.MetaMadera,
+                        metaPiedra = partidaEnCurso.MetaPiedra,
+                        metaComida = partidaEnCurso.MetaComida
+                    });
+                }
+
+                // Si no hay partida activa, terminamos la anterior (si existía)
+                Partida? ultimaPartida = _context.Partidas
+                    .OrderByDescending(p => p.Id)
+                    .FirstOrDefault();
+
+                if (ultimaPartida != null && ultimaPartida.Estado != EstadoPartida.Terminada)
+                {
+                    ultimaPartida.Estado = EstadoPartida.Terminada;
+                    _context.SaveChanges();
+                }
+
+                // Creamos una nueva usando tu propia función IniciarPartida()
+                Partida nuevaPartida = IniciarPartida();
+
+                // Devolvemos los datos al frontend
+                return Ok(new
+                {
+                    ok = true,
+                    existente = false,
+                    partidaId = nuevaPartida.Id,
+                    metaMadera = nuevaPartida.MetaMadera,
+                    metaPiedra = nuevaPartida.MetaPiedra,
+                    metaComida = nuevaPartida.MetaComida
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { ok = false, mensaje = ex.Message });
+            }
+        }
+    }
+}    
