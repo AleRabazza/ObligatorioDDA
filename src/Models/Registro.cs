@@ -20,8 +20,5 @@ namespace ObligatorioDDA.src.Models
         
         public DateTime Fecha { get; set; }
 
-
-
-
     }
 }

@@ -17,7 +17,7 @@ namespace ObligatorioDDA.src.Services
 
             int metaFinal = GenerarMeta();
 
-            return metaFinal;
+           return metaFinal;
         }
 
          private  int GenerarMeta()

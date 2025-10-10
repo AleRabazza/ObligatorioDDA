@@ -22,16 +22,6 @@ namespace ObligatorioDDA.src.Controllers
         {
             Partida HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
 
-            //Partida HayPartidaTerminada = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Terminada);
-            //if (HayPartidaEnJuego == null) {
-            //    //retornar resultados de partida anterior si la hubo
-
-            //}
-
-            //if (HayPartidaEnJuego == null && HayPartidaTerminada == null)
-            //{
-            //    HayPartidaEnJuego = IniciarPartida();
-            //}   
 
             if (HayPartidaEnJuego == null)
             {
@@ -43,6 +33,19 @@ namespace ObligatorioDDA.src.Controllers
             ViewBag.MetaPiedra = HayPartidaEnJuego.MetaPiedra;
             ViewBag.MetaComida = HayPartidaEnJuego.MetaComida;
             ViewBag.PartidaId = HayPartidaEnJuego.Id;
+
+            int? jugadorId = HttpContext.Session.GetInt32(SessionUsuario.JugadorId);
+            string? nombreJugador = null;
+            if (jugadorId.HasValue)
+            {
+                nombreJugador = _context.Jugadores
+                    .Where(j => j.Id == jugadorId.Value)
+                    .Select(j => j.Nombre)
+                    .FirstOrDefault();
+            }
+
+            ViewBag.NombreJugador = nombreJugador;                 
+            ViewBag.RequiereNombre = !jugadorId.HasValue;
             return View();
         }
 
