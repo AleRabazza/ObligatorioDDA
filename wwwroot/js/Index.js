@@ -23,9 +23,15 @@
     const panelTiempo = document.getElementById('tiempoPartidaCompleta');
     const valorTiempo = document.getElementById('tiempoPartidaValor');
 
+    const lienzoGrafico = document.getElementById('graficoProgreso');
+    let graficoProgreso = null;
+    let idIntervaloGrafico = null;
+    const colorProgreso = 'rgba(54, 162, 235, 0.85)';  // azul 
+    const colorCompleto = 'rgba(25, 135, 84, 0.95)'; // verde 
+    const colorPendiente = 'rgba(200, 200, 200, 0.35)';// gris 
+
     const tablaResultados = document.getElementById('tablaResultados');
     const cuerpoResultados = document.getElementById('tablaResultadosBody');
-
 
     const modalMinijuegoElemento = document.getElementById('miniGameModal');
     const modalMinijuego = new bootstrap.Modal(modalMinijuegoElemento);
@@ -38,14 +44,38 @@
     const botonCerrarXMinijuego = document.getElementById('miniGameCloseX');
     const etiquetaSecuencia = document.getElementById('miniGameSecuencia');
 
-
-
-    let tipoActual = null;           
+    let tipoActual = null;
     let idTemporizador = null;
     let segundosRestantes = 60;
 
-    if (requiereNombre) {
+    const maderaInicial = parseInt(contenedorPrincipal.dataset.maderaActual || '0', 10);
+    const piedraInicial = parseInt(contenedorPrincipal.dataset.piedraActual || '0', 10);
+    const comidaInicial = parseInt(contenedorPrincipal.dataset.comidaActual || '0', 10);
 
+    const metaMadera = parseInt(contenedorPrincipal.dataset.metaMadera || '0', 10);
+    const metaPiedra = parseInt(contenedorPrincipal.dataset.metaPiedra || '0', 10);
+    const metaComida = parseInt(contenedorPrincipal.dataset.metaComida || '0', 10);
+
+    // 
+    maderaActual.textContent = String(maderaInicial);
+    piedraActual.textContent = String(piedraInicial);
+    comidaActual.textContent = String(comidaInicial);
+
+    // deshabilitar bootones si ya se alcanzó la meta
+    if (maderaInicial >= metaMadera) botonRecolectarMadera.disabled = true;
+    if (piedraInicial >= metaPiedra) botonRecolectarPiedra.disabled = true;
+    if (comidaInicial >= metaComida) botonRecolectarComida.disabled = true;
+
+    // grafico inicial
+    if (lienzoGrafico && typeof Chart !== 'undefined') {
+        crearGraficoProgreso(
+            maderaInicial, piedraInicial, comidaInicial,
+            metaMadera, metaPiedra, metaComida
+        );
+    }
+
+
+    if (requiereNombre) {
         inputNombre.value = '';
         modalCambiarNombre.show();
         setTimeout(() => inputNombre.focus(), 250);
@@ -93,7 +123,6 @@
     }
 
     function renderizarEntradasPara(tipo) {
-
         if (tipo === 0) {
             areaDinamica.innerHTML = `
                 <label class="form-label text-white">Respuesta</label>
@@ -142,7 +171,7 @@
             if (!datos.ok) { alert(datos.msg || "Error"); return; }
 
             etiquetaEnunciado.textContent = datos.enunciado || "";
-            etiquetaPregunta.textContent = "";                // limpiamos por si acaso
+            etiquetaPregunta.textContent = "";
             areaDinamica.innerHTML = "";
             botonEnviarMinijuego.disabled = true;
 
@@ -150,16 +179,13 @@
             iniciarCuentaRegresiva(datos.countdown || 60);
 
             if (tipo === 1 && datos.datos) {
-
                 const secuencia = datos.datos.secuencia || datos.datos.Secuencia || [];
-
                 reproducirSecuencia(secuencia, 1000, 500, function () {
                     etiquetaPregunta.textContent = datos.preguntaDiferida || "Preparándose pregunta...";
-                    renderizarEntradasPara(1);               
-                    botonEnviarMinijuego.disabled = false;    
+                    renderizarEntradasPara(1);
+                    botonEnviarMinijuego.disabled = false;
                 });
             } else {
-
                 etiquetaPregunta.textContent = datos.pregunta || "";
                 renderizarEntradasPara(tipo);
                 botonEnviarMinijuego.disabled = false;
@@ -190,7 +216,6 @@
 
         mostrarSiguiente();
     }
-
 
     async function enviarRespuestaMinijuego() {
         const inputOculto = areaDinamica.querySelector('#miniGameAnswer');
@@ -238,6 +263,27 @@
                 if (data.metasAlcanzadas && data.metasAlcanzadas.comida) botonRecolectarComida.disabled = true;
             }
 
+            if (data && data.metas && data.totales) {
+                crearGraficoProgreso(
+                    data.totales.madera,
+                    data.totales.piedra,
+                    data.totales.comida,
+                    data.metas.madera,
+                    data.metas.piedra,
+                    data.metas.comida
+                );
+            }
+
+            if (data.partidaCompletada) {
+                detenerAutoRefrescoGrafico();
+                setTimeout(function () {
+                    const cardGrafico = lienzoGrafico.closest('.card');
+                    if (cardGrafico) {
+                        cardGrafico.style.display = 'none';
+                    }
+                }, 2000);
+            }
+
             // si la partida termina muestro resultados
             if (data.partidaCompletada) {
                 if (data.tiempoPartida) {
@@ -261,7 +307,6 @@
                     tablaResultados.classList.remove('d-none');
                 }
 
-           
                 botonRecolectarMadera.disabled = true;
                 botonRecolectarPiedra.disabled = true;
                 botonRecolectarComida.disabled = true;
@@ -276,17 +321,162 @@
         modalMinijuego.hide();
     }
 
+    function crearGraficoProgreso(madera, piedra, comida, metaMadera, metaPiedra, metaComida) {
+        if (graficoProgreso) {
+            actualizarGraficoProgreso(madera, piedra, comida, metaMadera, metaPiedra, metaComida);
+            return;
+        }
+
+        const etiquetas = ['Madera', 'Piedra', 'Comida'];
+        const datosProgreso = [madera, piedra, comida];
+        const datosMeta = [metaMadera, metaPiedra, metaComida];
+        const datosPendiente = datosMeta.map(function (m, i) { return Math.max(m - datosProgreso[i], 0); });
+
+        const datos = {
+            labels: etiquetas,
+            datasets: [
+                {
+                    label: 'Progreso',
+                    data: datosProgreso,
+                    backgroundColor: function (ctx) {
+                        const i = ctx.dataIndex;
+                        return (datosProgreso[i] >= datosMeta[i]) ? colorCompleto : colorProgreso;
+                    },
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    stack: 'recursos'
+                },
+                {
+                    label: 'Pendiente',
+                    data: datosPendiente,
+                    backgroundColor: colorPendiente,
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    stack: 'recursos'
+                }
+            ]
+        };
+
+        const opciones = {
+            maintainAspectRatio: false,
+            animation: {
+                duration: 600,
+                easing: 'easeOutQuart'
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: { color: '#e6e8ef' }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.08)' },
+                    ticks: { color: '#e6e8ef', precision: 0 }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const i = context.dataIndex;
+                            return `${etiquetas[i]}: ${datosProgreso[i]}/${datosMeta[i]}`;
+                        }
+                    }
+                }
+            }
+        };
+
+        graficoProgreso = new Chart(lienzoGrafico.getContext('2d'), {
+            type: 'bar',
+            data: datos,
+            options: opciones
+        });
+    }
+
+    function actualizarGraficoProgreso(madera, piedra, comida, metaMadera, metaPiedra, metaComida) {
+        if (!graficoProgreso) return;
+
+        const datosProgreso = [madera, piedra, comida];
+        const datosMeta = [metaMadera, metaPiedra, metaComida];
+        const datosPendiente = datosMeta.map(function (m, i) { return Math.max(m - datosProgreso[i], 0); });
+
+        graficoProgreso.data.datasets[0].data = datosProgreso;
+        graficoProgreso.data.datasets[0].backgroundColor = function (ctx) {
+            const i = ctx.dataIndex;
+            return (datosProgreso[i] >= datosMeta[i]) ? colorCompleto : colorProgreso;
+        };
+
+        graficoProgreso.data.datasets[1].data = datosPendiente;
+
+        graficoProgreso.options.plugins.tooltip.callbacks.label = function (context) {
+            const i = context.dataIndex;
+            return `${graficoProgreso.data.labels[i]}: ${datosProgreso[i]}/${datosMeta[i]}`;
+        };
+
+        graficoProgreso.update();
+    }
+
+    async function refrescarGraficoDesdeServidor() {
+        try {
+            const respuesta = await fetch('/Partida/EstadoActual');
+            const datos = await respuesta.json();
+            if (!datos || !datos.ok || datos.sinPartida) return;
+
+            const partidaActualRender = parseInt(contenedorPrincipal.dataset.partidaId, 10);
+            if (datos.partidaId && datos.partidaId !== partidaActualRender) {
+                contenedorPrincipal.dataset.partidaId = String(datos.partidaId);
+            }
+
+            if (datos.metas && datos.totales) {
+                crearGraficoProgreso(
+                    datos.totales.madera, datos.totales.piedra, datos.totales.comida,
+                    datos.metas.madera, datos.metas.piedra, datos.metas.comida
+                );
+            }
+
+            if (datos.partidaCompletada) {
+                if (datos.metas) {
+                    actualizarGraficoProgreso(
+                        datos.metas.madera, datos.metas.piedra, datos.metas.comida,
+                        datos.metas.madera, datos.metas.piedra, datos.metas.comida
+                    );
+                }
+                detenerAutoRefrescoGrafico();
+                setTimeout(function () {
+                    const cardGrafico = lienzoGrafico.closest('.card');
+                    if (cardGrafico) { cardGrafico.style.display = 'none'; }
+                }, 2000);
+            }
+        } catch { }
+    }
+
+    function iniciarAutoRefrescoGrafico() {
+        detenerAutoRefrescoGrafico();
+        idIntervaloGrafico = setInterval(refrescarGraficoDesdeServidor, 5000);
+    }
+
+    function detenerAutoRefrescoGrafico() {
+        if (idIntervaloGrafico) {
+            clearInterval(idIntervaloGrafico);
+            idIntervaloGrafico = null;
+        }
+    }
+
+    window.addEventListener('beforeunload', function () {
+        detenerAutoRefrescoGrafico();
+    });
 
     botonRecolectarMadera.addEventListener('click', () => abrirMinijuego(0));
     botonRecolectarPiedra.addEventListener('click', () => abrirMinijuego(1));
     botonRecolectarComida.addEventListener('click', () => abrirMinijuego(2));
 
-    // modal de minijuego
     botonEnviarMinijuego.addEventListener('click', enviarRespuestaMinijuego);
     botonCancelarMinijuego.addEventListener('click', cerrarMinijuego);
     botonCerrarXMinijuego.addEventListener('click', cerrarMinijuego);
 
-    // reiniciar partida
     botonReiniciar.addEventListener('click', async () => {
         const confirmar = confirm("¿Deseas reiniciar la partida?");
         if (!confirmar) return;
@@ -305,4 +495,8 @@
             alert("Error al reiniciar la partida: " + data.mensaje);
         }
     });
+
+    // Crea el gráfico inicial 
+    refrescarGraficoDesdeServidor();
+    iniciarAutoRefrescoGrafico();
 });

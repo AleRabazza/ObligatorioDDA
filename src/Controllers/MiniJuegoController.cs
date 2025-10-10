@@ -106,7 +106,6 @@ namespace ObligatorioDDA.src.Controllers
             IMiniJuego juego = CrearMinijuego(tipo);
             (bool correcto, string mensaje) validacion = juego.Validar(respuesta, state.Datos, state.RespuestaCorrecta);
 
-            // Siempre cerrar el minijuego después de responder (correcto o incorrecto)
             HttpContext.Session.Remove(SesionKey);
 
             if (!validacion.correcto)
@@ -119,20 +118,19 @@ namespace ObligatorioDDA.src.Controllers
                 });
             }
 
-            // ========= LÓGICA DE GUARDAR REGISTRO AQUÍ (sin servicio) =========
+
 
             Partida? partida = _context.Partidas.FirstOrDefault(p => p.Id == partidaId && p.Estado == EstadoPartida.Jugando);
             if (partida == null)
             {
-                // Si ya no está en juego, devolvemos finalizada para que el front pase a resultados
+
                 return Ok(new { ok = true, correcto = true, msg = validacion.mensaje, partidaCompletada = true });
             }
 
-            // Totales actuales
+
             Totales totales = CalcularTotales(partidaId);
             (bool maderaLlena, bool piedraLlena, bool comidaLlena) metas = VerificarMetas(partida, totales);
 
-            // Solo sumamos si el recurso todavía no llegó a su meta
             if (PuedeSumar(tipo, metas))
             {
                 Registro nuevoRegistro = new Registro
@@ -182,6 +180,7 @@ namespace ObligatorioDDA.src.Controllers
                 msg = validacion.mensaje,
                 totales = new { madera = totales.Madera, piedra = totales.Piedra, comida = totales.Comida },
                 metasAlcanzadas = new { madera = metas.maderaLlena, piedra = metas.piedraLlena, comida = metas.comidaLlena },
+                metas = new { madera = partida.MetaMadera, piedra = partida.MetaPiedra, comida = partida.MetaComida },
                 partidaCompletada = partidaCompletada,
                 tiempoPartida = tiempoPartida,
                 registros = partidaCompletada ? registros : null

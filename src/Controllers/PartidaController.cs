@@ -20,32 +20,40 @@ namespace ObligatorioDDA.src.Controllers
 
         public ActionResult Index()
         {
-            Partida HayPartidaEnJuego = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
-
-
-            if (HayPartidaEnJuego == null)
+            Partida? partida = _context.Partidas.FirstOrDefault(p => p.Estado == EstadoPartida.Jugando);
+            if (partida == null)
             {
-                HayPartidaEnJuego = IniciarPartida();
+                partida = IniciarPartida();
             }
 
-            // viewbags de meta para mostrar en la vista
-            ViewBag.MetaMadera = HayPartidaEnJuego.MetaMadera;
-            ViewBag.MetaPiedra = HayPartidaEnJuego.MetaPiedra;
-            ViewBag.MetaComida = HayPartidaEnJuego.MetaComida;
-            ViewBag.PartidaId = HayPartidaEnJuego.Id;
+            // metas de partida
+            ViewBag.MetaMadera = partida.MetaMadera;
+            ViewBag.MetaPiedra = partida.MetaPiedra;
+            ViewBag.MetaComida = partida.MetaComida;
+            ViewBag.PartidaId = partida.Id;
 
-            int? jugadorId = HttpContext.Session.GetInt32(SessionUsuario.JugadorId);
-            string? nombreJugador = null;
-            if (jugadorId.HasValue)
-            {
-                nombreJugador = _context.Jugadores
-                    .Where(j => j.Id == jugadorId.Value)
-                    .Select(j => j.Nombre)
-                    .FirstOrDefault();
-            }
+            // totakes de partida
+            int totalMadera = _context.Registros
+                .Where(r => r.Id_Partida == partida.Id && r.TipoRecolectado == Recurso.TipoRecurso.Madera)
+                .Sum(r => (int?)r.Puntaje) ?? 0;
 
-            ViewBag.NombreJugador = nombreJugador;                 
-            ViewBag.RequiereNombre = !jugadorId.HasValue;
+            int totalPiedra = _context.Registros
+                .Where(r => r.Id_Partida == partida.Id && r.TipoRecolectado == Recurso.TipoRecurso.Piedra)
+                .Sum(r => (int?)r.Puntaje) ?? 0;
+
+            int totalComida = _context.Registros
+                .Where(r => r.Id_Partida == partida.Id && r.TipoRecolectado == Recurso.TipoRecurso.Comida)
+                .Sum(r => (int?)r.Puntaje) ?? 0;
+
+            ViewBag.TotalMadera = totalMadera;
+            ViewBag.TotalPiedra = totalPiedra;
+            ViewBag.TotalComida = totalComida;
+
+            // desabhilita si se cumple la meta
+            ViewBag.MaderaLlena = totalMadera >= partida.MetaMadera;
+            ViewBag.PiedraLlena = totalPiedra >= partida.MetaPiedra;
+            ViewBag.ComidaLlena = totalComida >= partida.MetaComida;
+
             return View();
         }
 
@@ -65,7 +73,6 @@ namespace ObligatorioDDA.src.Controllers
 
 
         [HttpPost]
-
         public IActionResult Reiniciar()
         {
             try
@@ -118,5 +125,43 @@ namespace ObligatorioDDA.src.Controllers
                 return BadRequest(new { ok = false, mensaje = ex.Message });
             }
         }
+
+        [HttpGet]
+        public IActionResult EstadoActual()
+        {
+            Partida? partida = _context.Partidas
+                .OrderByDescending(p => p.Id)
+                .FirstOrDefault(p => p.Estado == EstadoPartida.Jugando || p.Estado == EstadoPartida.Terminada);
+
+            if (partida == null)
+                return Ok(new { ok = true, sinPartida = true });
+
+            int totMadera = _context.Registros
+                .Where(r => r.Id_Partida == partida.Id && r.TipoRecolectado == Recurso.TipoRecurso.Madera)
+                .Sum(r => (int?)r.Puntaje) ?? 0;
+
+            int totPiedra = _context.Registros
+                .Where(r => r.Id_Partida == partida.Id && r.TipoRecolectado == Recurso.TipoRecurso.Piedra)
+                .Sum(r => (int?)r.Puntaje) ?? 0;
+
+            int totComida = _context.Registros
+                .Where(r => r.Id_Partida == partida.Id && r.TipoRecolectado == Recurso.TipoRecurso.Comida)
+                .Sum(r => (int?)r.Puntaje) ?? 0;
+
+            bool completa =
+                totMadera >= partida.MetaMadera &&
+                totPiedra >= partida.MetaPiedra &&
+                totComida >= partida.MetaComida;
+
+            return Ok(new
+            {
+                ok = true,
+                partidaId = partida.Id,
+                metas = new { madera = partida.MetaMadera, piedra = partida.MetaPiedra, comida = partida.MetaComida },
+                totales = new { madera = totMadera, piedra = totPiedra, comida = totComida },
+                partidaCompletada = completa
+            });
+        }
     }
-}    
+}
+   

@@ -108,7 +108,16 @@
     </nav>
 
     <!-- Main -->
-    <main id="mainContainer" class="container py-4" data-partida-id="@ViewBag.PartidaId" data-requiere-nombre="@ViewBag.RequiereNombre">
+    <main id="mainContainer"
+          class="container py-4"
+          data-partida-id="@ViewBag.PartidaId"
+          data-requiere-nombre="@ViewBag.RequiereNombre"
+          data-madera-actual="@ViewBag.TotalMadera"
+          data-piedra-actual="@ViewBag.TotalPiedra"
+          data-comida-actual="@ViewBag.TotalComida"
+          data-meta-madera="@ViewBag.MetaMadera"
+          data-meta-piedra="@ViewBag.MetaPiedra"
+          data-meta-comida="@ViewBag.MetaComida">
 
         <!-- Tiempo de la partida -->
         <div id="tiempoPartidaCompleta" class="text-center mt-3 d-none">
@@ -125,12 +134,16 @@
                     <div class="card-body d-flex flex-column text-center">
                         <h5 class="card-title mb-3 text-white">Madera</h5>
                         <div class="resource-counter mb-3">
-                            <div class="resource-current" id="maderaActual">0</div>
+                            <div class="resource-current" id="maderaActual">@ViewBag.TotalMadera</div>
                             <div class="resource-total">de <span id="woodTotal">@ViewBag.MetaMadera</span></div>
                         </div>
                         <p class="card-text muted small-note mb-4">Suma 1 por click.</p>
                         <div class="mt-auto d-grid">
-                            <button id="btnRecolectarMadera" class="btn btn-primary btn-resource">+1 Madera</button>
+                            <button id="btnRecolectarMadera"
+                                    class="btn btn-primary btn-resource"
+                                    @(ViewBag.MaderaLlena ? "disabled" : "")>
+                                +1 Madera
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -142,12 +155,16 @@
                     <div class="card-body d-flex flex-column text-center">
                         <h5 class="card-title mb-3 text-white">Piedra</h5>
                         <div class="resource-counter mb-3">
-                            <div class="resource-current" id="piedraActual">0</div>
+                            <div class="resource-current" id="piedraActual">@ViewBag.TotalPiedra</div>
                             <div class="resource-total">de <span id="stoneTotal">@ViewBag.MetaPiedra</span></div>
                         </div>
                         <p class="card-text muted small-note mb-4">Suma 1 por click.</p>
                         <div class="mt-auto d-grid">
-                            <button id="btnRecolectarPiedra" class="btn btn-warning btn-resource">+1 Piedra</button>
+                            <button id="btnRecolectarPiedra"
+                                    class="btn btn-warning btn-resource"
+                                    @(ViewBag.PiedraLlena ? "disabled" : "")>
+                                +1 Piedra
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -159,15 +176,30 @@
                     <div class="card-body d-flex flex-column text-center">
                         <h5 class="card-title mb-3 text-white">Comida</h5>
                         <div class="resource-counter mb-3">
-                            <div class="resource-current" id="comidaActual">0</div>
+                            <div class="resource-current" id="comidaActual">@ViewBag.TotalComida</div>
                             <div class="resource-total">de <span id="foodTotal">@ViewBag.MetaComida</span></div>
                         </div>
                         <p class="card-text muted small-note mb-4">Suma 1 por click.</p>
                         <div class="mt-auto d-grid">
-                            <button id="btnRecolectarComida" class="btn btn-success btn-resource">+1 Comida</button>
+                            <button id="btnRecolectarComida"
+                                    class="btn btn-success btn-resource"
+                                    @(ViewBag.ComidaLlena ? "disabled" : "")>
+                                +1 Comida
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de progreso -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title text-white mb-3">Progreso de recursos</h5>
+                <div style="position:relative; height: 280px;">
+                    <canvas id="graficoProgreso"></canvas>
+                </div>
+                <div class="form-text text-muted">Actualiza automáticamente cada 5 segundos.</div>
             </div>
         </div>
 
@@ -189,11 +221,12 @@
                 </table>
             </div>
             <div>
-                <button id="btnReiniciar" class="btn btn-success"> Reiniciar Partida </button>
+                <button id="btnReiniciar" class="btn btn-success">Reiniciar Partida</button>
             </div>
         </div>
 
     </main>
+
 
     <!-- Modal para cambiar nombre -->
     <div class="modal fade" id="changeNameModal" tabindex="-1" aria-labelledby="changeNameModalLabel" aria-hidden="true">
@@ -250,7 +283,7 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <!-- Nuestro JS -->
     <script src="~/js/Index.js"></script>
 </body>
