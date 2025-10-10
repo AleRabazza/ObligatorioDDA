@@ -23,10 +23,10 @@ namespace ObligatorioDDA.src.Services
          private  int GenerarMeta()
         {
             double numero = _random.NextDouble(); // valor entre 0 y 1
-            int meta = (int)Math.Round(numero * 100);
+            int meta = (int)Math.Round(numero * 10);
 
-            if (meta < 10) meta = 10;
-            if (meta > 100) meta = 100;
+            if (meta < 1) meta = 1;
+            if (meta > 10) meta = 10;
 
             return meta;
         }

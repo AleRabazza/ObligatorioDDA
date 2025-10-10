@@ -9,7 +9,6 @@
   <ItemGroup>
     <Folder Include="docs\diagramas\" />
     <Folder Include="docs\wireframes\" />
-    <Folder Include="tests\" />
   </ItemGroup>
 
   <ItemGroup>
