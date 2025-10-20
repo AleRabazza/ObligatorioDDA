@@ -6,7 +6,7 @@
 
         public MiniJuegoMemoria()
         {
-            this.generador = new Random();
+            generador = new Random();
         }
 
         public (string enunciado, string? pregunta, string respuestaCorrecta, object? datos) Generar()
@@ -14,7 +14,7 @@
             int[] secuencia = new int[5];
             for (int i = 0; i < 5; i++)
             {
-                secuencia[i] = this.generador.Next(1, 21);
+                secuencia[i] = generador.Next(1, 21);
             }
 
             string[] preguntas = new string[]
@@ -26,7 +26,7 @@
                 "¿Había algún número menor a 10?"
             };
 
-            string preguntaElegida = preguntas[this.generador.Next(preguntas.Length)];
+            string preguntaElegida = preguntas[generador.Next(preguntas.Length)];
             bool respuestaSiNo = false;
 
             if (preguntaElegida == "¿Había exactamente 2 números pares?")

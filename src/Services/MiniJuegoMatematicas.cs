@@ -2,18 +2,18 @@
 {
     public class MiniJuegoMatematicas : IMiniJuego
     {
-        private readonly Random generador;
+        private readonly Random _generador;
 
         public MiniJuegoMatematicas()
         {
-            this.generador = new Random();
+           _generador = new Random();
         }
 
         public (string enunciado, string? pregunta, string respuestaCorrecta, object? datos) Generar()
         {
-            int a = this.generador.Next(1, 101);
-            int b = this.generador.Next(1, 101);
-            int c = this.generador.Next(1, 101);
+            int a = _generador.Next(1, 101);
+            int b = _generador.Next(1, 101);
+            int c = _generador.Next(1, 101);
             int suma = a + b + c;
 
             string enunciado = a.ToString() + " + " + b.ToString() + " + " + c.ToString() + " = ?";

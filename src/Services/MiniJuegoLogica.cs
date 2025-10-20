@@ -2,11 +2,11 @@
 {
     public class MiniJuegoLogica : IMiniJuego
     {
-        private readonly Random generador;
+        private readonly Random _generador;
 
         public MiniJuegoLogica()
         {
-            this.generador = new Random();
+            _generador = new Random();
         }
 
         public (string enunciado, string? pregunta, string respuestaCorrecta, object? datos) Generar()
@@ -14,7 +14,7 @@
             int[] numeros = new int[3];
             for (int i = 0; i < 3; i++)
             {
-                numeros[i] = this.generador.Next(1, 101);
+                numeros[i] = _generador.Next(1, 101);
             }
 
             string[] proposiciones = new string[]
@@ -26,7 +26,7 @@
                 "Todos los números son diferentes"
             };
 
-            string proposicion = proposiciones[this.generador.Next(proposiciones.Length)];
+            string proposicion = proposiciones[_generador.Next(proposiciones.Length)];
             bool valor = false;
 
             if (proposicion == "Exactamente 2 números son pares")
